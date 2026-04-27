@@ -1,0 +1,30 @@
+{
+  "name": "language-practice-app",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "lint": "next lint",
+    "start": "next start"
+  },
+  "dependencies": {
+    "lucide-react": "0.487.0",
+    "next": "latest",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "postcss": "8.5.12",
+    "tailwindcss": "4.1.12",
+    "typescript": "latest"
+  },
+  "overrides": {
+    "postcss": "8.5.12"
+  }
+}

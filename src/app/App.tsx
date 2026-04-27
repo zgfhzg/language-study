@@ -1,0 +1,444 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Mic, MicOff, Volume2, CheckCircle2, Circle, Calendar } from 'lucide-react';
+
+interface Phrase {
+  id: number;
+  text: string;
+  translation: string;
+  pronunciation: string;
+  category: 'daily' | 'travel' | 'business';
+  level: number;
+}
+
+const phrasesData: Record<string, Phrase[]> = {
+  english: [
+    // Daily - Level 1-3
+    { id: 1, text: 'Hello', translation: '안녕하세요', pronunciation: 'hello', category: 'daily', level: 1 },
+    { id: 2, text: 'Thank you', translation: '감사합니다', pronunciation: 'thank you', category: 'daily', level: 1 },
+    { id: 3, text: 'Good morning', translation: '좋은 아침입니다', pronunciation: 'good morning', category: 'daily', level: 1 },
+    { id: 4, text: 'How are you?', translation: '어떻게 지내세요?', pronunciation: 'how are you', category: 'daily', level: 2 },
+    { id: 5, text: 'I need some help', translation: '도움이 필요해요', pronunciation: 'I need some help', category: 'daily', level: 3 },
+
+    // Travel - Level 1-3
+    { id: 6, text: 'Where is the bathroom?', translation: '화장실이 어디에요?', pronunciation: 'where is the bathroom', category: 'travel', level: 1 },
+    { id: 7, text: 'How much is this?', translation: '이거 얼마예요?', pronunciation: 'how much is this', category: 'travel', level: 1 },
+    { id: 8, text: 'Can you recommend a restaurant?', translation: '식당 추천해주실 수 있나요?', pronunciation: 'can you recommend a restaurant', category: 'travel', level: 2 },
+    { id: 9, text: 'I would like to book a hotel room', translation: '호텔 방을 예약하고 싶어요', pronunciation: 'I would like to book a hotel room', category: 'travel', level: 3 },
+
+    // Business - Level 2-4
+    { id: 10, text: 'Nice to meet you', translation: '만나서 반갑습니다', pronunciation: 'nice to meet you', category: 'business', level: 2 },
+    { id: 11, text: 'I have a meeting at 3 PM', translation: '오후 3시에 회의가 있어요', pronunciation: 'I have a meeting at 3 PM', category: 'business', level: 3 },
+    { id: 12, text: 'Could you send me the report?', translation: '보고서를 보내주시겠어요?', pronunciation: 'could you send me the report', category: 'business', level: 4 },
+  ],
+
+  chinese: [
+    // Daily - Level 1-3
+    { id: 1, text: '你好', translation: '안녕하세요', pronunciation: 'nǐ hǎo', category: 'daily', level: 1 },
+    { id: 2, text: '谢谢', translation: '감사합니다', pronunciation: 'xiè xie', category: 'daily', level: 1 },
+    { id: 3, text: '早上好', translation: '좋은 아침입니다', pronunciation: 'zǎo shang hǎo', category: 'daily', level: 1 },
+    { id: 4, text: '你好吗？', translation: '잘 지내세요?', pronunciation: 'nǐ hǎo ma', category: 'daily', level: 2 },
+    { id: 5, text: '我需要帮助', translation: '도움이 필요해요', pronunciation: 'wǒ xū yào bāng zhù', category: 'daily', level: 3 },
+
+    // Travel - Level 1-3
+    { id: 6, text: '洗手间在哪里？', translation: '화장실이 어디에요?', pronunciation: 'xǐ shǒu jiān zài nǎ lǐ', category: 'travel', level: 1 },
+    { id: 7, text: '这个多少钱？', translation: '이거 얼마예요?', pronunciation: 'zhè ge duō shǎo qián', category: 'travel', level: 1 },
+    { id: 8, text: '你能推荐一家餐厅吗？', translation: '식당 추천해주실 수 있나요?', pronunciation: 'nǐ néng tuī jiàn yī jiā cān tīng ma', category: 'travel', level: 2 },
+    { id: 9, text: '我想预订酒店房间', translation: '호텔 방을 예약하고 싶어요', pronunciation: 'wǒ xiǎng yù dìng jiǔ diàn fáng jiān', category: 'travel', level: 3 },
+
+    // Business - Level 2-4
+    { id: 10, text: '很高兴认识你', translation: '만나서 반갑습니다', pronunciation: 'hěn gāo xìng rèn shi nǐ', category: 'business', level: 2 },
+    { id: 11, text: '我下午三点有会议', translation: '오후 3시에 회의가 있어요', pronunciation: 'wǒ xià wǔ sān diǎn yǒu huì yì', category: 'business', level: 3 },
+    { id: 12, text: '你能把报告发给我吗？', translation: '보고서를 보내주시겠어요?', pronunciation: 'nǐ néng bǎ bào gào fā gěi wǒ ma', category: 'business', level: 4 },
+  ],
+
+  japanese: [
+    // Daily - Level 1-3
+    { id: 1, text: 'こんにちは', translation: '안녕하세요', pronunciation: 'konnichiwa', category: 'daily', level: 1 },
+    { id: 2, text: 'ありがとう', translation: '감사합니다', pronunciation: 'arigatō', category: 'daily', level: 1 },
+    { id: 3, text: 'おはよう', translation: '좋은 아침입니다', pronunciation: 'ohayō', category: 'daily', level: 1 },
+    { id: 4, text: '元気ですか？', translation: '잘 지내세요?', pronunciation: 'genki desu ka', category: 'daily', level: 2 },
+    { id: 5, text: '助けが必要です', translation: '도움이 필요해요', pronunciation: 'tasuke ga hitsuyō desu', category: 'daily', level: 3 },
+
+    // Travel - Level 1-3
+    { id: 6, text: 'トイレはどこですか？', translation: '화장실이 어디에요?', pronunciation: 'toire wa doko desu ka', category: 'travel', level: 1 },
+    { id: 7, text: 'これはいくらですか？', translation: '이거 얼마예요?', pronunciation: 'kore wa ikura desu ka', category: 'travel', level: 1 },
+    { id: 8, text: 'レストランをおすすめできますか？', translation: '식당 추천해주실 수 있나요?', pronunciation: 'resutoran wo osusume dekimasu ka', category: 'travel', level: 2 },
+    { id: 9, text: 'ホテルの部屋を予約したいです', translation: '호텔 방을 예약하고 싶어요', pronunciation: 'hoteru no heya wo yoyaku shitai desu', category: 'travel', level: 3 },
+
+    // Business - Level 2-4
+    { id: 10, text: 'お会いできて嬉しいです', translation: '만나서 반갑습니다', pronunciation: 'oai dekite ureshii desu', category: 'business', level: 2 },
+    { id: 11, text: '午後3時に会議があります', translation: '오후 3시에 회의가 있어요', pronunciation: 'gogo san-ji ni kaigi ga arimasu', category: 'business', level: 3 },
+    { id: 12, text: 'レポートを送っていただけますか？', translation: '보고서를 보내주시겠어요?', pronunciation: 'repōto wo okutte itadakemasu ka', category: 'business', level: 4 },
+  ],
+
+  spanish: [
+    // Daily - Level 1-3
+    { id: 1, text: 'Hola', translation: '안녕하세요', pronunciation: 'ola', category: 'daily', level: 1 },
+    { id: 2, text: 'Gracias', translation: '감사합니다', pronunciation: 'grasias', category: 'daily', level: 1 },
+    { id: 3, text: 'Buenos días', translation: '좋은 아침입니다', pronunciation: 'buenos días', category: 'daily', level: 1 },
+    { id: 4, text: '¿Cómo estás?', translation: '잘 지내세요?', pronunciation: 'komo estas', category: 'daily', level: 2 },
+    { id: 5, text: 'Necesito ayuda', translation: '도움이 필요해요', pronunciation: 'necesito ayuda', category: 'daily', level: 3 },
+
+    // Travel - Level 1-3
+    { id: 6, text: '¿Dónde está el baño?', translation: '화장실이 어디에요?', pronunciation: 'donde esta el baño', category: 'travel', level: 1 },
+    { id: 7, text: '¿Cuánto cuesta esto?', translation: '이거 얼마예요?', pronunciation: 'kuanto kuesta esto', category: 'travel', level: 1 },
+    { id: 8, text: '¿Puedes recomendar un restaurante?', translation: '식당 추천해주실 수 있나요?', pronunciation: 'puedes rekomendar un restaurante', category: 'travel', level: 2 },
+    { id: 9, text: 'Quisiera reservar una habitación', translation: '호텔 방을 예약하고 싶어요', pronunciation: 'kisiera reservar una abitasion', category: 'travel', level: 3 },
+
+    // Business - Level 2-4
+    { id: 10, text: 'Encantado de conocerte', translation: '만나서 반갑습니다', pronunciation: 'enkantado de konoserte', category: 'business', level: 2 },
+    { id: 11, text: 'Tengo una reunión a las 3 PM', translation: '오후 3시에 회의가 있어요', pronunciation: 'tengo una reunion a las tres PM', category: 'business', level: 3 },
+    { id: 12, text: '¿Podrías enviarme el informe?', translation: '보고서를 보내주시겠어요?', pronunciation: 'podrias enbiarme el informe', category: 'business', level: 4 },
+  ],
+};
+
+export default function PracticeApp() {
+  const [language, setLanguage] = useState<'chinese' | 'japanese' | 'english' | 'spanish'>('english');
+  const [category, setCategory] = useState<'daily' | 'travel' | 'business'>('daily');
+  const [level, setLevel] = useState(1);
+  const [phrases, setPhrases] = useState<Phrase[]>([]);
+  const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const [completedPhrases, setCompletedPhrases] = useState<Set<number>>(new Set());
+  const [recognition, setRecognition] = useState<any>(null);
+
+  useEffect(() => {
+    const filtered = phrasesData[language].filter(
+      (phrase) => phrase.category === category && phrase.level <= level
+    );
+    setPhrases(filtered);
+    setCurrentPhraseIndex(0);
+    setTranscript('');
+    setCompletedPhrases(new Set());
+  }, [language, category, level]);
+
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+      recognitionInstance.continuous = false;
+      recognitionInstance.interimResults = false;
+
+      const langMap = {
+        chinese: 'zh-CN',
+        japanese: 'ja-JP',
+        english: 'en-US',
+        spanish: 'es-ES',
+      };
+      recognitionInstance.lang = langMap[language];
+
+      recognitionInstance.onresult = (event: any) => {
+        const speechResult = event.results[0][0].transcript;
+        setTranscript(speechResult);
+        checkAccuracy(speechResult);
+      };
+
+      recognitionInstance.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        setIsListening(false);
+      };
+
+      recognitionInstance.onend = () => {
+        setIsListening(false);
+      };
+
+      setRecognition(recognitionInstance);
+    }
+  }, [language]);
+
+  const checkAccuracy = (spokenText: string) => {
+    const currentPhrase = phrases[currentPhraseIndex];
+    const normalizedSpoken = spokenText.toLowerCase().replace(/\s+/g, '');
+    const normalizedTarget = currentPhrase.text.toLowerCase().replace(/\s+/g, '');
+
+    if (normalizedSpoken.includes(normalizedTarget) || normalizedTarget.includes(normalizedSpoken)) {
+      setCompletedPhrases(prev => new Set(prev).add(currentPhrase.id));
+    }
+  };
+
+  const startListening = () => {
+    if (recognition) {
+      setTranscript('');
+      const langMap = {
+        chinese: 'zh-CN',
+        japanese: 'ja-JP',
+        english: 'en-US',
+        spanish: 'es-ES',
+      };
+      recognition.lang = langMap[language];
+      recognition.start();
+      setIsListening(true);
+    }
+  };
+
+  const stopListening = () => {
+    if (recognition) {
+      recognition.stop();
+      setIsListening(false);
+    }
+  };
+
+  const playAudio = (text: string) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    const langMap = {
+      chinese: 'zh-CN',
+      japanese: 'ja-JP',
+      english: 'en-US',
+      spanish: 'es-ES',
+    };
+    utterance.lang = langMap[language];
+    utterance.rate = 0.8;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const currentPhrase = phrases[currentPhraseIndex];
+  const progress = phrases.length > 0 ? (completedPhrases.size / phrases.length) * 100 : 0;
+
+  if (phrases.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 flex items-center justify-center">
+        <div className="bg-white rounded-xl shadow-lg p-6 max-w-md text-center">
+          <p className="text-sm text-gray-600 mb-2">선택한 조건에 맞는 문장이 없습니다.</p>
+          <p className="text-xs text-gray-500">난이도를 높이거나 다른 카테고리를 선택해보세요.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3">
+      <div className="max-w-md mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-xl shadow-lg p-4 mb-3">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-base font-bold text-gray-800">매일 언어 연습</h1>
+            <div className="flex items-center gap-1 text-indigo-600">
+              <Calendar className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium">{new Date().toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}</span>
+            </div>
+          </div>
+
+          {/* Language Toggle */}
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <button
+              onClick={() => setLanguage('english')}
+              className={`py-2 px-2.5 rounded-lg text-xs font-medium transition-all ${
+                language === 'english'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+              }`}
+            >
+              🇺🇸 영어
+            </button>
+            <button
+              onClick={() => setLanguage('spanish')}
+              className={`py-2 px-2.5 rounded-lg text-xs font-medium transition-all ${
+                language === 'spanish'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+              }`}
+            >
+              🇪🇸 스페인어
+            </button>
+            <button
+              onClick={() => setLanguage('chinese')}
+              className={`py-2 px-2.5 rounded-lg text-xs font-medium transition-all ${
+                language === 'chinese'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+              }`}
+            >
+              🇨🇳 중국어
+            </button>
+            <button
+              onClick={() => setLanguage('japanese')}
+              className={`py-2 px-2.5 rounded-lg text-xs font-medium transition-all ${
+                language === 'japanese'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+              }`}
+            >
+              🇯🇵 일본어
+            </button>
+          </div>
+
+          {/* Category Selection */}
+          <div className="mb-3">
+            <p className="text-xs text-gray-600 mb-1.5">카테고리</p>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setCategory('daily')}
+                className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
+                  category === 'daily'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+                }`}
+              >
+                일상
+              </button>
+              <button
+                onClick={() => setCategory('travel')}
+                className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
+                  category === 'travel'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+                }`}
+              >
+                여행
+              </button>
+              <button
+                onClick={() => setCategory('business')}
+                className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
+                  category === 'business'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+                }`}
+              >
+                비즈니스
+              </button>
+            </div>
+          </div>
+
+          {/* Level Selection */}
+          <div className="mb-3">
+            <p className="text-xs text-gray-600 mb-1.5">난이도 레벨: {level}</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="range"
+                min="1"
+                max="10"
+                value={level}
+                onChange={(e) => setLevel(Number(e.target.value))}
+                className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+              />
+              <span className="text-xs font-medium text-gray-700 w-6 text-center">{level}</span>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="mt-3">
+            <div className="flex justify-between text-xs text-gray-600 mb-1.5">
+              <span>오늘의 진행률</span>
+              <span className="font-medium">{completedPhrases.size}/{phrases.length}</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Main Practice Area */}
+        <div className="bg-white rounded-xl shadow-lg p-4 mb-3">
+          <div className="text-center mb-4">
+            <div className="inline-flex items-center gap-1.5 bg-indigo-50 px-2.5 py-1 rounded-full text-indigo-600 text-xs font-medium mb-3">
+              문장 {currentPhraseIndex + 1} / {phrases.length}
+            </div>
+
+            <div className="mb-4">
+              <div className="flex items-center justify-center gap-2 mb-1.5">
+                <h2 className="text-2xl font-bold text-gray-800">{currentPhrase.text}</h2>
+                <button
+                  onClick={() => playAudio(currentPhrase.text)}
+                  className="p-1.5 bg-indigo-100 active:bg-indigo-200 rounded-full transition-colors"
+                >
+                  <Volume2 className="w-4 h-4 text-indigo-600" />
+                </button>
+              </div>
+              <p className="text-sm text-gray-500 mb-0.5">{currentPhrase.pronunciation}</p>
+              <p className="text-xs text-gray-600">{currentPhrase.translation}</p>
+            </div>
+          </div>
+
+          {/* Microphone Button */}
+          <div className="flex flex-col items-center gap-2 mb-4">
+            <button
+              onClick={isListening ? stopListening : startListening}
+              className={`p-5 rounded-full transition-all transform active:scale-95 ${
+                isListening
+                  ? 'bg-red-500 active:bg-red-600 scale-105 animate-pulse'
+                  : 'bg-indigo-600 active:bg-indigo-700'
+              } shadow-lg`}
+            >
+              {isListening ? (
+                <MicOff className="w-8 h-8 text-white" />
+              ) : (
+                <Mic className="w-8 h-8 text-white" />
+              )}
+            </button>
+            <p className="text-xs text-gray-600 font-medium">
+              {isListening ? '듣고 있어요... 말씀해주세요' : '마이크를 눌러 말해보세요'}
+            </p>
+          </div>
+
+          {/* Transcript Result */}
+          {transcript && (
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-3 mb-4">
+              <p className="text-xs text-gray-600 mb-1">인식된 내용:</p>
+              <p className="text-base font-medium text-gray-800">{transcript}</p>
+              {completedPhrases.has(currentPhrase.id) && (
+                <div className="flex items-center gap-1.5 mt-2 text-green-600">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span className="text-xs font-medium">훌륭해요! 정확합니다!</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPhraseIndex(Math.max(0, currentPhraseIndex - 1))}
+              disabled={currentPhraseIndex === 0}
+              className="flex-1 py-2.5 px-3 bg-gray-100 active:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 text-gray-700 text-xs font-medium rounded-lg transition-colors"
+            >
+              이전
+            </button>
+            <button
+              onClick={() => setCurrentPhraseIndex(Math.min(phrases.length - 1, currentPhraseIndex + 1))}
+              disabled={currentPhraseIndex === phrases.length - 1}
+              className="flex-1 py-2.5 px-3 bg-indigo-600 active:bg-indigo-700 disabled:bg-gray-300 text-white text-xs font-medium rounded-lg transition-colors"
+            >
+              다음
+            </button>
+          </div>
+        </div>
+
+        {/* Phrase List */}
+        <div className="bg-white rounded-xl shadow-lg p-4 pb-6">
+          <h3 className="text-sm font-bold text-gray-800 mb-2.5">오늘의 연습 문장</h3>
+          <div className="grid grid-cols-1 gap-2">
+            {phrases.map((phrase, index) => (
+              <button
+                key={phrase.id}
+                onClick={() => setCurrentPhraseIndex(index)}
+                className={`p-2.5 rounded-lg text-left transition-all ${
+                  currentPhraseIndex === index
+                    ? 'bg-indigo-50 border-2 border-indigo-500'
+                    : 'bg-gray-50 border-2 border-transparent active:bg-gray-100'
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  {completedPhrases.has(phrase.id) ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <Circle className="w-3.5 h-3.5 text-gray-300 flex-shrink-0 mt-0.5" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800">{phrase.text}</p>
+                    <p className="text-xs text-gray-500">{phrase.translation}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
