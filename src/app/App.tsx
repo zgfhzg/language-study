@@ -126,6 +126,7 @@ export default function PracticeApp() {
   const [translationOutput, setTranslationOutput] = useState('');
   const [translationPronunciation, setTranslationPronunciation] = useState('');
   const [translationNote, setTranslationNote] = useState('');
+  const [translationSpeechStatus, setTranslationSpeechStatus] = useState('');
 
   const langMap: Record<Language, string> = {
     chinese: 'zh-CN',
@@ -183,6 +184,7 @@ export default function PracticeApp() {
     setTranslationOutput('');
     setTranslationPronunciation('');
     setTranslationNote('');
+    setTranslationSpeechStatus('');
   }, [language]);
 
   const normalizeText = (text: string) =>
@@ -221,6 +223,7 @@ export default function PracticeApp() {
       setTranslationOutput('');
       setTranslationPronunciation('');
       setTranslationNote('번역할 문장을 입력하거나 마이크로 말해보세요.');
+      setTranslationSpeechStatus('');
       return;
     }
 
@@ -246,23 +249,34 @@ export default function PracticeApp() {
     setTranslationNote('연습 문장 사전에서 번역했어요.');
   };
 
+  const updateTranslationInput = (value: string) => {
+    setTranslationInput(value);
+    setTranslationSpeechStatus('');
+  };
+
   const startTranslationListening = () => {
     if (!recognition) {
       setTranslationNote('이 브라우저에서는 음성 인식을 지원하지 않습니다.');
+      setTranslationSpeechStatus('');
       return;
     }
 
     setTranslationOutput('');
     setTranslationPronunciation('');
     setTranslationNote('');
+    setTranslationSpeechStatus('듣고 있어요...');
     recognition.lang = translationDirection === 'ko-to-foreign' ? 'ko-KR' : langMap[language];
+    recognition.interimResults = false;
     recognition.onresult = (event: any) => {
       const speechResult = event.results[0][0].transcript;
       setTranslationInput(speechResult);
+      setTranslationSpeechStatus('음성 입력을 번역했어요.');
       translateText(speechResult);
     };
-    recognition.onerror = () => {
+    recognition.onerror = (event: any) => {
       setIsTranslatingSpeech(false);
+      setTranslationSpeechStatus('');
+      console.error('Translation speech recognition error', event.error);
       setTranslationNote('음성을 인식하지 못했습니다. 다시 시도해보세요.');
     };
     recognition.onend = () => {
@@ -277,6 +291,7 @@ export default function PracticeApp() {
       recognition.stop();
     }
     setIsTranslatingSpeech(false);
+    setTranslationSpeechStatus('음성 입력을 중지했어요.');
   };
 
   const checkAccuracy = (spokenText: string) => {
@@ -333,6 +348,7 @@ export default function PracticeApp() {
     setTranslationOutput('');
     setTranslationPronunciation('');
     setTranslationNote('');
+    setTranslationSpeechStatus('');
   };
 
   const currentPhrase = phrases[currentPhraseIndex];
@@ -648,14 +664,14 @@ export default function PracticeApp() {
             <div className="mb-3">
               <textarea
                 value={translationInput}
-                onChange={(event) => setTranslationInput(event.target.value)}
+                onChange={(event) => updateTranslationInput(event.target.value)}
                 placeholder={`${sourceLabel} 문장을 입력하세요`}
                 rows={5}
                 className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800 outline-none focus:border-teal-500 focus:bg-white"
               />
             </div>
 
-            <div className="flex gap-2 mb-3">
+            <div className="grid grid-cols-[1fr_1fr] gap-2 mb-3">
               <button
                 onClick={() => translateText()}
                 className="flex-1 py-2.5 px-3 bg-teal-600 active:bg-teal-700 text-white text-xs font-medium rounded-lg transition-colors"
@@ -664,21 +680,33 @@ export default function PracticeApp() {
               </button>
               <button
                 onClick={isTranslatingSpeech ? stopTranslationListening : startTranslationListening}
-                className={`p-2.5 rounded-lg transition-colors ${
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-medium transition-colors ${
                   isTranslatingSpeech
-                    ? 'bg-red-500 active:bg-red-600'
-                    : 'bg-gray-100 active:bg-gray-200'
+                    ? 'bg-red-500 active:bg-red-600 text-white'
+                    : 'bg-gray-100 active:bg-gray-200 text-gray-700'
                 }`}
                 aria-label="번역 음성 입력"
                 title="번역 음성 입력"
               >
                 {isTranslatingSpeech ? (
-                  <MicOff className="w-4 h-4 text-white" />
+                  <>
+                    <MicOff className="w-4 h-4" />
+                    중지
+                  </>
                 ) : (
-                  <Mic className="w-4 h-4 text-gray-700" />
+                  <>
+                    <Mic className="w-4 h-4" />
+                    음성 입력
+                  </>
                 )}
               </button>
             </div>
+
+            {translationSpeechStatus && (
+              <div className="mb-3 rounded-lg bg-teal-50 px-3 py-2 text-xs font-medium text-teal-700">
+                {translationSpeechStatus}
+              </div>
+            )}
 
             {(translationOutput || translationNote) && (
               <div className="rounded-lg bg-gradient-to-r from-teal-50 to-indigo-50 p-3">
