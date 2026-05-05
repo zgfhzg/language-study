@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   ArrowLeftRight,
+  BookOpen,
   Calendar,
   CheckCircle2,
   Circle,
@@ -15,6 +16,7 @@ import {
 type Language = 'chinese' | 'japanese' | 'english' | 'spanish';
 type Category = 'daily' | 'travel' | 'business';
 type TranslationDirection = 'ko-to-foreign' | 'foreign-to-ko';
+type ActiveTab = 'practice' | 'translate';
 
 interface Phrase {
   id: number;
@@ -108,6 +110,7 @@ const phrasesData: Record<Language, Phrase[]> = {
 };
 
 export default function PracticeApp() {
+  const [activeTab, setActiveTab] = useState<ActiveTab>('practice');
   const [language, setLanguage] = useState<Language>('english');
   const [category, setCategory] = useState<Category>('daily');
   const [level, setLevel] = useState(1);
@@ -338,17 +341,6 @@ export default function PracticeApp() {
   const targetLabel = translationDirection === 'ko-to-foreign' ? languageLabels[language] : '한국어';
   const outputSpeechLanguage = translationDirection === 'ko-to-foreign' ? langMap[language] : 'ko-KR';
 
-  if (phrases.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow-lg p-6 max-w-md text-center">
-          <p className="text-sm text-gray-600 mb-2">선택한 조건에 맞는 문장이 없습니다.</p>
-          <p className="text-xs text-gray-500">난이도를 높이거나 다른 카테고리를 선택해보세요.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3">
       <div className="max-w-md mx-auto">
@@ -360,6 +352,32 @@ export default function PracticeApp() {
               <Calendar className="w-3.5 h-3.5" />
               <span className="text-xs font-medium">{new Date().toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}</span>
             </div>
+          </div>
+
+          {/* Main Tabs */}
+          <div className="grid grid-cols-2 gap-2 mb-3 rounded-xl bg-gray-100 p-1">
+            <button
+              onClick={() => setActiveTab('practice')}
+              className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'practice'
+                  ? 'bg-white text-indigo-700 shadow-sm'
+                  : 'text-gray-500 active:bg-gray-200'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              연습
+            </button>
+            <button
+              onClick={() => setActiveTab('translate')}
+              className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'translate'
+                  ? 'bg-white text-teal-700 shadow-sm'
+                  : 'text-gray-500 active:bg-gray-200'
+              }`}
+            >
+              <Languages className="w-3.5 h-3.5" />
+              번역
+            </button>
           </div>
 
           {/* Language Toggle */}
@@ -406,273 +424,292 @@ export default function PracticeApp() {
             </button>
           </div>
 
-          {/* Category Selection */}
-          <div className="mb-3">
-            <p className="text-xs text-gray-600 mb-1.5">카테고리</p>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => setCategory('daily')}
-                className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
-                  category === 'daily'
-                    ? 'bg-purple-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 active:bg-gray-200'
-                }`}
-              >
-                일상
-              </button>
-              <button
-                onClick={() => setCategory('travel')}
-                className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
-                  category === 'travel'
-                    ? 'bg-purple-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 active:bg-gray-200'
-                }`}
-              >
-                여행
-              </button>
-              <button
-                onClick={() => setCategory('business')}
-                className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
-                  category === 'business'
-                    ? 'bg-purple-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 active:bg-gray-200'
-                }`}
-              >
-                비즈니스
-              </button>
-            </div>
-          </div>
-
-          {/* Level Selection */}
-          <div className="mb-3">
-            <p className="text-xs text-gray-600 mb-1.5">난이도 레벨: {level}</p>
-            <div className="flex items-center gap-2">
-              <input
-                type="range"
-                min="1"
-                max="10"
-                value={level}
-                onChange={(e) => setLevel(Number(e.target.value))}
-                className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
-              />
-              <span className="text-xs font-medium text-gray-700 w-6 text-center">{level}</span>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="mt-3">
-            <div className="flex justify-between text-xs text-gray-600 mb-1.5">
-              <span>오늘의 진행률</span>
-              <span className="font-medium">{completedPhrases.size}/{phrases.length}</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Main Practice Area */}
-        <div className="bg-white rounded-xl shadow-lg p-4 mb-3">
-          <div className="text-center mb-4">
-            <div className="inline-flex items-center gap-1.5 bg-indigo-50 px-2.5 py-1 rounded-full text-indigo-600 text-xs font-medium mb-3">
-              문장 {currentPhraseIndex + 1} / {phrases.length}
-            </div>
-
-            <div className="mb-4">
-              <div className="flex items-center justify-center gap-2 mb-1.5">
-                <h2 className="text-2xl font-bold text-gray-800">{currentPhrase.text}</h2>
-                <button
-                  onClick={() => playAudio(currentPhrase.text)}
-                  className="p-1.5 bg-indigo-100 active:bg-indigo-200 rounded-full transition-colors"
-                >
-                  <Volume2 className="w-4 h-4 text-indigo-600" />
-                </button>
-              </div>
-              <p className="text-sm text-gray-500 mb-0.5">{currentPhrase.pronunciation}</p>
-              <p className="text-xs text-gray-600">{currentPhrase.translation}</p>
-            </div>
-          </div>
-
-          {/* Microphone Button */}
-          <div className="flex flex-col items-center gap-2 mb-4">
-            <button
-              onClick={isListening ? stopListening : startListening}
-              className={`p-5 rounded-full transition-all transform active:scale-95 ${
-                isListening
-                  ? 'bg-red-500 active:bg-red-600 scale-105 animate-pulse'
-                  : 'bg-indigo-600 active:bg-indigo-700'
-              } shadow-lg`}
-            >
-              {isListening ? (
-                <MicOff className="w-8 h-8 text-white" />
-              ) : (
-                <Mic className="w-8 h-8 text-white" />
-              )}
-            </button>
-            <p className="text-xs text-gray-600 font-medium">
-              {isListening ? '듣고 있어요... 말씀해주세요' : '마이크를 눌러 말해보세요'}
-            </p>
-          </div>
-
-          {/* Transcript Result */}
-          {transcript && (
-            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-3 mb-4">
-              <p className="text-xs text-gray-600 mb-1">인식된 내용:</p>
-              <p className="text-base font-medium text-gray-800">{transcript}</p>
-              {completedPhrases.has(currentPhrase.id) && (
-                <div className="flex items-center gap-1.5 mt-2 text-green-600">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span className="text-xs font-medium">훌륭해요! 정확합니다!</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Navigation Buttons */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setCurrentPhraseIndex(Math.max(0, currentPhraseIndex - 1))}
-              disabled={currentPhraseIndex === 0}
-              className="flex-1 py-2.5 px-3 bg-gray-100 active:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 text-gray-700 text-xs font-medium rounded-lg transition-colors"
-            >
-              이전
-            </button>
-            <button
-              onClick={() => setCurrentPhraseIndex(Math.min(phrases.length - 1, currentPhraseIndex + 1))}
-              disabled={currentPhraseIndex === phrases.length - 1}
-              className="flex-1 py-2.5 px-3 bg-indigo-600 active:bg-indigo-700 disabled:bg-gray-300 text-white text-xs font-medium rounded-lg transition-colors"
-            >
-              다음
-            </button>
-          </div>
-        </div>
-
-        {/* Translator */}
-        <div className="bg-white rounded-xl shadow-lg p-4 mb-3">
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-teal-50 rounded-lg">
-                <Languages className="w-4 h-4 text-teal-600" />
-              </div>
-              <h3 className="text-sm font-bold text-gray-800">번역 연습</h3>
-            </div>
-            <button
-              onClick={swapTranslationDirection}
-              className="p-2 bg-gray-100 active:bg-gray-200 rounded-lg transition-colors"
-              aria-label="번역 방향 바꾸기"
-              title="번역 방향 바꾸기"
-            >
-              <ArrowLeftRight className="w-4 h-4 text-gray-700" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 mb-3 text-xs font-medium">
-            <div className="rounded-lg bg-teal-50 px-2.5 py-2 text-center text-teal-700">
-              {sourceLabel}
-            </div>
-            <ArrowLeftRight className="w-3.5 h-3.5 text-gray-400" />
-            <div className="rounded-lg bg-indigo-50 px-2.5 py-2 text-center text-indigo-700">
-              {targetLabel}
-            </div>
-          </div>
-
-          <div className="mb-3">
-            <textarea
-              value={translationInput}
-              onChange={(event) => setTranslationInput(event.target.value)}
-              placeholder={`${sourceLabel} 문장을 입력하세요`}
-              rows={3}
-              className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800 outline-none focus:border-teal-500 focus:bg-white"
-            />
-          </div>
-
-          <div className="flex gap-2 mb-3">
-            <button
-              onClick={() => translateText()}
-              className="flex-1 py-2.5 px-3 bg-teal-600 active:bg-teal-700 text-white text-xs font-medium rounded-lg transition-colors"
-            >
-              번역하기
-            </button>
-            <button
-              onClick={isTranslatingSpeech ? stopTranslationListening : startTranslationListening}
-              className={`p-2.5 rounded-lg transition-colors ${
-                isTranslatingSpeech
-                  ? 'bg-red-500 active:bg-red-600'
-                  : 'bg-gray-100 active:bg-gray-200'
-              }`}
-              aria-label="번역 음성 입력"
-              title="번역 음성 입력"
-            >
-              {isTranslatingSpeech ? (
-                <MicOff className="w-4 h-4 text-white" />
-              ) : (
-                <Mic className="w-4 h-4 text-gray-700" />
-              )}
-            </button>
-          </div>
-
-          {(translationOutput || translationNote) && (
-            <div className="rounded-lg bg-gradient-to-r from-teal-50 to-indigo-50 p-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="text-xs text-gray-600 mb-1">번역 결과</p>
-                  <p className="break-words text-base font-semibold text-gray-800">
-                    {translationOutput || '번역 결과가 없습니다.'}
-                  </p>
-                  {translationPronunciation && (
-                    <p className="mt-1 text-xs text-gray-500">{translationPronunciation}</p>
-                  )}
-                </div>
-                {translationOutput && (
+          {activeTab === 'practice' && (
+            <>
+              {/* Category Selection */}
+              <div className="mb-3">
+                <p className="text-xs text-gray-600 mb-1.5">카테고리</p>
+                <div className="grid grid-cols-3 gap-2">
                   <button
-                    onClick={() => playAudio(translationOutput, outputSpeechLanguage)}
-                    className="p-1.5 bg-white active:bg-gray-100 rounded-full transition-colors shadow-sm"
-                    aria-label="번역 결과 듣기"
-                    title="번역 결과 듣기"
+                    onClick={() => setCategory('daily')}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
+                      category === 'daily'
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+                    }`}
                   >
-                    <Volume2 className="w-4 h-4 text-teal-600" />
+                    일상
                   </button>
-                )}
+                  <button
+                    onClick={() => setCategory('travel')}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
+                      category === 'travel'
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+                    }`}
+                  >
+                    여행
+                  </button>
+                  <button
+                    onClick={() => setCategory('business')}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
+                      category === 'business'
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+                    }`}
+                  >
+                    비즈니스
+                  </button>
+                </div>
               </div>
-              {translationNote && (
-                <p className="mt-2 text-xs text-gray-500">{translationNote}</p>
-              )}
-            </div>
+
+              {/* Level Selection */}
+              <div className="mb-3">
+                <p className="text-xs text-gray-600 mb-1.5">난이도 레벨: {level}</p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={level}
+                    onChange={(e) => setLevel(Number(e.target.value))}
+                    className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                  />
+                  <span className="text-xs font-medium text-gray-700 w-6 text-center">{level}</span>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="mt-3">
+                <div className="flex justify-between text-xs text-gray-600 mb-1.5">
+                  <span>오늘의 진행률</span>
+                  <span className="font-medium">{completedPhrases.size}/{phrases.length}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            </>
           )}
         </div>
 
-        {/* Phrase List */}
-        <div className="bg-white rounded-xl shadow-lg p-4 pb-6">
-          <h3 className="text-sm font-bold text-gray-800 mb-2.5">오늘의 연습 문장</h3>
-          <div className="grid grid-cols-1 gap-2">
-            {phrases.map((phrase, index) => (
-              <button
-                key={phrase.id}
-                onClick={() => setCurrentPhraseIndex(index)}
-                className={`p-2.5 rounded-lg text-left transition-all ${
-                  currentPhraseIndex === index
-                    ? 'bg-indigo-50 border-2 border-indigo-500'
-                    : 'bg-gray-50 border-2 border-transparent active:bg-gray-100'
-                }`}
-              >
-                <div className="flex items-start gap-2">
-                  {completedPhrases.has(phrase.id) ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
-                  ) : (
-                    <Circle className="w-3.5 h-3.5 text-gray-300 flex-shrink-0 mt-0.5" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800">{phrase.text}</p>
-                    <p className="text-xs text-gray-500">{phrase.translation}</p>
+        {activeTab === 'practice' && (
+          <>
+            {/* Main Practice Area */}
+            {currentPhrase ? (
+              <div className="bg-white rounded-xl shadow-lg p-4 mb-3">
+                <div className="text-center mb-4">
+                  <div className="inline-flex items-center gap-1.5 bg-indigo-50 px-2.5 py-1 rounded-full text-indigo-600 text-xs font-medium mb-3">
+                    문장 {currentPhraseIndex + 1} / {phrases.length}
+                  </div>
+
+                  <div className="mb-4">
+                    <div className="flex items-center justify-center gap-2 mb-1.5">
+                      <h2 className="text-2xl font-bold text-gray-800">{currentPhrase.text}</h2>
+                      <button
+                        onClick={() => playAudio(currentPhrase.text)}
+                        className="p-1.5 bg-indigo-100 active:bg-indigo-200 rounded-full transition-colors"
+                      >
+                        <Volume2 className="w-4 h-4 text-indigo-600" />
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-0.5">{currentPhrase.pronunciation}</p>
+                    <p className="text-xs text-gray-600">{currentPhrase.translation}</p>
                   </div>
                 </div>
+
+                {/* Microphone Button */}
+                <div className="flex flex-col items-center gap-2 mb-4">
+                  <button
+                    onClick={isListening ? stopListening : startListening}
+                    className={`p-5 rounded-full transition-all transform active:scale-95 ${
+                      isListening
+                        ? 'bg-red-500 active:bg-red-600 scale-105 animate-pulse'
+                        : 'bg-indigo-600 active:bg-indigo-700'
+                    } shadow-lg`}
+                  >
+                    {isListening ? (
+                      <MicOff className="w-8 h-8 text-white" />
+                    ) : (
+                      <Mic className="w-8 h-8 text-white" />
+                    )}
+                  </button>
+                  <p className="text-xs text-gray-600 font-medium">
+                    {isListening ? '듣고 있어요... 말씀해주세요' : '마이크를 눌러 말해보세요'}
+                  </p>
+                </div>
+
+                {/* Transcript Result */}
+                {transcript && (
+                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-3 mb-4">
+                    <p className="text-xs text-gray-600 mb-1">인식된 내용:</p>
+                    <p className="text-base font-medium text-gray-800">{transcript}</p>
+                    {completedPhrases.has(currentPhrase.id) && (
+                      <div className="flex items-center gap-1.5 mt-2 text-green-600">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span className="text-xs font-medium">훌륭해요! 정확합니다!</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Navigation Buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPhraseIndex(Math.max(0, currentPhraseIndex - 1))}
+                    disabled={currentPhraseIndex === 0}
+                    className="flex-1 py-2.5 px-3 bg-gray-100 active:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 text-gray-700 text-xs font-medium rounded-lg transition-colors"
+                  >
+                    이전
+                  </button>
+                  <button
+                    onClick={() => setCurrentPhraseIndex(Math.min(phrases.length - 1, currentPhraseIndex + 1))}
+                    disabled={currentPhraseIndex === phrases.length - 1}
+                    className="flex-1 py-2.5 px-3 bg-indigo-600 active:bg-indigo-700 disabled:bg-gray-300 text-white text-xs font-medium rounded-lg transition-colors"
+                  >
+                    다음
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-lg p-6 mb-3 text-center">
+                <p className="text-sm text-gray-600 mb-2">선택한 조건에 맞는 문장이 없습니다.</p>
+                <p className="text-xs text-gray-500">난이도를 높이거나 다른 카테고리를 선택해보세요.</p>
+              </div>
+            )}
+
+            {/* Phrase List */}
+            {phrases.length > 0 && (
+              <div className="bg-white rounded-xl shadow-lg p-4 pb-6">
+                <h3 className="text-sm font-bold text-gray-800 mb-2.5">오늘의 연습 문장</h3>
+                <div className="grid grid-cols-1 gap-2">
+                  {phrases.map((phrase, index) => (
+                    <button
+                      key={phrase.id}
+                      onClick={() => setCurrentPhraseIndex(index)}
+                      className={`p-2.5 rounded-lg text-left transition-all ${
+                        currentPhraseIndex === index
+                          ? 'bg-indigo-50 border-2 border-indigo-500'
+                          : 'bg-gray-50 border-2 border-transparent active:bg-gray-100'
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        {completedPhrases.has(phrase.id) ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <Circle className="w-3.5 h-3.5 text-gray-300 flex-shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800">{phrase.text}</p>
+                          <p className="text-xs text-gray-500">{phrase.translation}</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === 'translate' && (
+          /* Translator */
+          <div className="bg-white rounded-xl shadow-lg p-4 pb-5">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-teal-50 rounded-lg">
+                  <Languages className="w-4 h-4 text-teal-600" />
+                </div>
+                <h3 className="text-sm font-bold text-gray-800">번역 연습</h3>
+              </div>
+              <button
+                onClick={swapTranslationDirection}
+                className="p-2 bg-gray-100 active:bg-gray-200 rounded-lg transition-colors"
+                aria-label="번역 방향 바꾸기"
+                title="번역 방향 바꾸기"
+              >
+                <ArrowLeftRight className="w-4 h-4 text-gray-700" />
               </button>
-            ))}
+            </div>
+
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 mb-3 text-xs font-medium">
+              <div className="rounded-lg bg-teal-50 px-2.5 py-2 text-center text-teal-700">
+                {sourceLabel}
+              </div>
+              <ArrowLeftRight className="w-3.5 h-3.5 text-gray-400" />
+              <div className="rounded-lg bg-indigo-50 px-2.5 py-2 text-center text-indigo-700">
+                {targetLabel}
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <textarea
+                value={translationInput}
+                onChange={(event) => setTranslationInput(event.target.value)}
+                placeholder={`${sourceLabel} 문장을 입력하세요`}
+                rows={5}
+                className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800 outline-none focus:border-teal-500 focus:bg-white"
+              />
+            </div>
+
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick={() => translateText()}
+                className="flex-1 py-2.5 px-3 bg-teal-600 active:bg-teal-700 text-white text-xs font-medium rounded-lg transition-colors"
+              >
+                번역하기
+              </button>
+              <button
+                onClick={isTranslatingSpeech ? stopTranslationListening : startTranslationListening}
+                className={`p-2.5 rounded-lg transition-colors ${
+                  isTranslatingSpeech
+                    ? 'bg-red-500 active:bg-red-600'
+                    : 'bg-gray-100 active:bg-gray-200'
+                }`}
+                aria-label="번역 음성 입력"
+                title="번역 음성 입력"
+              >
+                {isTranslatingSpeech ? (
+                  <MicOff className="w-4 h-4 text-white" />
+                ) : (
+                  <Mic className="w-4 h-4 text-gray-700" />
+                )}
+              </button>
+            </div>
+
+            {(translationOutput || translationNote) && (
+              <div className="rounded-lg bg-gradient-to-r from-teal-50 to-indigo-50 p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs text-gray-600 mb-1">번역 결과</p>
+                    <p className="break-words text-base font-semibold text-gray-800">
+                      {translationOutput || '번역 결과가 없습니다.'}
+                    </p>
+                    {translationPronunciation && (
+                      <p className="mt-1 text-xs text-gray-500">{translationPronunciation}</p>
+                    )}
+                  </div>
+                  {translationOutput && (
+                    <button
+                      onClick={() => playAudio(translationOutput, outputSpeechLanguage)}
+                      className="p-1.5 bg-white active:bg-gray-100 rounded-full transition-colors shadow-sm"
+                      aria-label="번역 결과 듣기"
+                      title="번역 결과 듣기"
+                    >
+                      <Volume2 className="w-4 h-4 text-teal-600" />
+                    </button>
+                  )}
+                </div>
+                {translationNote && (
+                  <p className="mt-2 text-xs text-gray-500">{translationNote}</p>
+                )}
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
