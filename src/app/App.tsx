@@ -1,18 +1,31 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Mic, MicOff, Volume2, CheckCircle2, Circle, Calendar } from 'lucide-react';
+import {
+  ArrowLeftRight,
+  Calendar,
+  CheckCircle2,
+  Circle,
+  Languages,
+  Mic,
+  MicOff,
+  Volume2,
+} from 'lucide-react';
+
+type Language = 'chinese' | 'japanese' | 'english' | 'spanish';
+type Category = 'daily' | 'travel' | 'business';
+type TranslationDirection = 'ko-to-foreign' | 'foreign-to-ko';
 
 interface Phrase {
   id: number;
   text: string;
   translation: string;
   pronunciation: string;
-  category: 'daily' | 'travel' | 'business';
+  category: Category;
   level: number;
 }
 
-const phrasesData: Record<string, Phrase[]> = {
+const phrasesData: Record<Language, Phrase[]> = {
   english: [
     // Daily - Level 1-3
     { id: 1, text: 'Hello', translation: '안녕하세요', pronunciation: 'hello', category: 'daily', level: 1 },
@@ -95,15 +108,35 @@ const phrasesData: Record<string, Phrase[]> = {
 };
 
 export default function PracticeApp() {
-  const [language, setLanguage] = useState<'chinese' | 'japanese' | 'english' | 'spanish'>('english');
-  const [category, setCategory] = useState<'daily' | 'travel' | 'business'>('daily');
+  const [language, setLanguage] = useState<Language>('english');
+  const [category, setCategory] = useState<Category>('daily');
   const [level, setLevel] = useState(1);
   const [phrases, setPhrases] = useState<Phrase[]>([]);
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
   const [isListening, setIsListening] = useState(false);
+  const [isTranslatingSpeech, setIsTranslatingSpeech] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [completedPhrases, setCompletedPhrases] = useState<Set<number>>(new Set());
   const [recognition, setRecognition] = useState<any>(null);
+  const [translationDirection, setTranslationDirection] = useState<TranslationDirection>('ko-to-foreign');
+  const [translationInput, setTranslationInput] = useState('');
+  const [translationOutput, setTranslationOutput] = useState('');
+  const [translationPronunciation, setTranslationPronunciation] = useState('');
+  const [translationNote, setTranslationNote] = useState('');
+
+  const langMap: Record<Language, string> = {
+    chinese: 'zh-CN',
+    japanese: 'ja-JP',
+    english: 'en-US',
+    spanish: 'es-ES',
+  };
+
+  const languageLabels: Record<Language, string> = {
+    english: '영어',
+    spanish: '스페인어',
+    chinese: '중국어',
+    japanese: '일본어',
+  };
 
   useEffect(() => {
     const filtered = phrasesData[language].filter(
@@ -122,12 +155,6 @@ export default function PracticeApp() {
       recognitionInstance.continuous = false;
       recognitionInstance.interimResults = false;
 
-      const langMap = {
-        chinese: 'zh-CN',
-        japanese: 'ja-JP',
-        english: 'en-US',
-        spanish: 'es-ES',
-      };
       recognitionInstance.lang = langMap[language];
 
       recognitionInstance.onresult = (event: any) => {
@@ -149,6 +176,106 @@ export default function PracticeApp() {
     }
   }, [language]);
 
+  useEffect(() => {
+    setTranslationOutput('');
+    setTranslationPronunciation('');
+    setTranslationNote('');
+  }, [language]);
+
+  const normalizeText = (text: string) =>
+    text
+      .trim()
+      .toLowerCase()
+      .replace(/[.,!?¿？。！、]/g, '')
+      .replace(/\s+/g, ' ');
+
+  const getTranslationMatch = (input: string) => {
+    const normalizedInput = normalizeText(input);
+
+    if (!normalizedInput) {
+      return null;
+    }
+
+    const match = phrasesData[language].find((phrase) => {
+      const sourceText =
+        translationDirection === 'ko-to-foreign' ? phrase.translation : phrase.text;
+      const normalizedSource = normalizeText(sourceText);
+
+      return (
+        normalizedSource === normalizedInput ||
+        normalizedSource.includes(normalizedInput) ||
+        normalizedInput.includes(normalizedSource)
+      );
+    });
+
+    return match ?? null;
+  };
+
+  const translateText = (input = translationInput) => {
+    const trimmedInput = input.trim();
+
+    if (!trimmedInput) {
+      setTranslationOutput('');
+      setTranslationPronunciation('');
+      setTranslationNote('번역할 문장을 입력하거나 마이크로 말해보세요.');
+      return;
+    }
+
+    const match = getTranslationMatch(trimmedInput);
+
+    if (!match) {
+      setTranslationOutput('');
+      setTranslationPronunciation('');
+      setTranslationNote(
+        '아직 내장 번역 사전에 없는 문장입니다. 오늘의 연습 문장에 있는 표현부터 번역할 수 있어요.'
+      );
+      return;
+    }
+
+    if (translationDirection === 'ko-to-foreign') {
+      setTranslationOutput(match.text);
+      setTranslationPronunciation(match.pronunciation);
+    } else {
+      setTranslationOutput(match.translation);
+      setTranslationPronunciation('');
+    }
+
+    setTranslationNote('연습 문장 사전에서 번역했어요.');
+  };
+
+  const startTranslationListening = () => {
+    if (!recognition) {
+      setTranslationNote('이 브라우저에서는 음성 인식을 지원하지 않습니다.');
+      return;
+    }
+
+    setTranslationOutput('');
+    setTranslationPronunciation('');
+    setTranslationNote('');
+    recognition.lang = translationDirection === 'ko-to-foreign' ? 'ko-KR' : langMap[language];
+    recognition.onresult = (event: any) => {
+      const speechResult = event.results[0][0].transcript;
+      setTranslationInput(speechResult);
+      translateText(speechResult);
+    };
+    recognition.onerror = () => {
+      setIsTranslatingSpeech(false);
+      setTranslationNote('음성을 인식하지 못했습니다. 다시 시도해보세요.');
+    };
+    recognition.onend = () => {
+      setIsTranslatingSpeech(false);
+    };
+    recognition.start();
+    setIsTranslatingSpeech(true);
+  };
+
+  const stopTranslationListening = () => {
+    if (recognition) {
+      recognition.stop();
+    }
+    setIsTranslatingSpeech(false);
+  };
+
   const checkAccuracy = (spokenText: string) => {
     const currentPhrase = phrases[currentPhraseIndex];
     const normalizedSpoken = spokenText.toLowerCase().replace(/\s+/g, '');
@@ -162,13 +289,19 @@ export default function PracticeApp() {
   const startListening = () => {
     if (recognition) {
       setTranscript('');
-      const langMap = {
-        chinese: 'zh-CN',
-        japanese: 'ja-JP',
-        english: 'en-US',
-        spanish: 'es-ES',
-      };
       recognition.lang = langMap[language];
+      recognition.onresult = (event: any) => {
+        const speechResult = event.results[0][0].transcript;
+        setTranscript(speechResult);
+        checkAccuracy(speechResult);
+      };
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        setIsListening(false);
+      };
+      recognition.onend = () => {
+        setIsListening(false);
+      };
       recognition.start();
       setIsListening(true);
     }
@@ -181,21 +314,29 @@ export default function PracticeApp() {
     }
   };
 
-  const playAudio = (text: string) => {
+  const playAudio = (text: string, speechLanguage = langMap[language]) => {
     const utterance = new SpeechSynthesisUtterance(text);
-    const langMap = {
-      chinese: 'zh-CN',
-      japanese: 'ja-JP',
-      english: 'en-US',
-      spanish: 'es-ES',
-    };
-    utterance.lang = langMap[language];
+    utterance.lang = speechLanguage;
     utterance.rate = 0.8;
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
+  };
+
+  const swapTranslationDirection = () => {
+    setTranslationDirection((current) =>
+      current === 'ko-to-foreign' ? 'foreign-to-ko' : 'ko-to-foreign'
+    );
+    setTranslationInput(translationOutput || translationInput);
+    setTranslationOutput('');
+    setTranslationPronunciation('');
+    setTranslationNote('');
   };
 
   const currentPhrase = phrases[currentPhraseIndex];
   const progress = phrases.length > 0 ? (completedPhrases.size / phrases.length) * 100 : 0;
+  const sourceLabel = translationDirection === 'ko-to-foreign' ? '한국어' : languageLabels[language];
+  const targetLabel = translationDirection === 'ko-to-foreign' ? languageLabels[language] : '한국어';
+  const outputSpeechLanguage = translationDirection === 'ko-to-foreign' ? langMap[language] : 'ko-KR';
 
   if (phrases.length === 0) {
     return (
@@ -407,6 +548,100 @@ export default function PracticeApp() {
               다음
             </button>
           </div>
+        </div>
+
+        {/* Translator */}
+        <div className="bg-white rounded-xl shadow-lg p-4 mb-3">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-teal-50 rounded-lg">
+                <Languages className="w-4 h-4 text-teal-600" />
+              </div>
+              <h3 className="text-sm font-bold text-gray-800">번역 연습</h3>
+            </div>
+            <button
+              onClick={swapTranslationDirection}
+              className="p-2 bg-gray-100 active:bg-gray-200 rounded-lg transition-colors"
+              aria-label="번역 방향 바꾸기"
+              title="번역 방향 바꾸기"
+            >
+              <ArrowLeftRight className="w-4 h-4 text-gray-700" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 mb-3 text-xs font-medium">
+            <div className="rounded-lg bg-teal-50 px-2.5 py-2 text-center text-teal-700">
+              {sourceLabel}
+            </div>
+            <ArrowLeftRight className="w-3.5 h-3.5 text-gray-400" />
+            <div className="rounded-lg bg-indigo-50 px-2.5 py-2 text-center text-indigo-700">
+              {targetLabel}
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <textarea
+              value={translationInput}
+              onChange={(event) => setTranslationInput(event.target.value)}
+              placeholder={`${sourceLabel} 문장을 입력하세요`}
+              rows={3}
+              className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800 outline-none focus:border-teal-500 focus:bg-white"
+            />
+          </div>
+
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => translateText()}
+              className="flex-1 py-2.5 px-3 bg-teal-600 active:bg-teal-700 text-white text-xs font-medium rounded-lg transition-colors"
+            >
+              번역하기
+            </button>
+            <button
+              onClick={isTranslatingSpeech ? stopTranslationListening : startTranslationListening}
+              className={`p-2.5 rounded-lg transition-colors ${
+                isTranslatingSpeech
+                  ? 'bg-red-500 active:bg-red-600'
+                  : 'bg-gray-100 active:bg-gray-200'
+              }`}
+              aria-label="번역 음성 입력"
+              title="번역 음성 입력"
+            >
+              {isTranslatingSpeech ? (
+                <MicOff className="w-4 h-4 text-white" />
+              ) : (
+                <Mic className="w-4 h-4 text-gray-700" />
+              )}
+            </button>
+          </div>
+
+          {(translationOutput || translationNote) && (
+            <div className="rounded-lg bg-gradient-to-r from-teal-50 to-indigo-50 p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-600 mb-1">번역 결과</p>
+                  <p className="break-words text-base font-semibold text-gray-800">
+                    {translationOutput || '번역 결과가 없습니다.'}
+                  </p>
+                  {translationPronunciation && (
+                    <p className="mt-1 text-xs text-gray-500">{translationPronunciation}</p>
+                  )}
+                </div>
+                {translationOutput && (
+                  <button
+                    onClick={() => playAudio(translationOutput, outputSpeechLanguage)}
+                    className="p-1.5 bg-white active:bg-gray-100 rounded-full transition-colors shadow-sm"
+                    aria-label="번역 결과 듣기"
+                    title="번역 결과 듣기"
+                  >
+                    <Volume2 className="w-4 h-4 text-teal-600" />
+                  </button>
+                )}
+              </div>
+              {translationNote && (
+                <p className="mt-2 text-xs text-gray-500">{translationNote}</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Phrase List */}
