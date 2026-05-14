@@ -1,0 +1,90 @@
+export type Language = 'chinese' | 'japanese' | 'english' | 'spanish';
+export type Category = 'daily' | 'travel' | 'business';
+
+export interface Phrase {
+  id: number;
+  text: string;
+  translation: string;
+  pronunciation: string;
+  category: Category;
+  level: number;
+}
+
+export const phrasesData: Record<Language, Phrase[]> = {
+  english: [
+    { id: 1, text: 'Hello', translation: '안녕하세요', pronunciation: 'hello', category: 'daily', level: 1 },
+    { id: 2, text: 'Thank you', translation: '감사합니다', pronunciation: 'thank you', category: 'daily', level: 1 },
+    { id: 3, text: 'Good morning', translation: '좋은 아침입니다', pronunciation: 'good morning', category: 'daily', level: 1 },
+    { id: 4, text: 'How are you?', translation: '어떻게 지내세요?', pronunciation: 'how are you', category: 'daily', level: 2 },
+    { id: 5, text: 'I need some help', translation: '도움이 필요해요', pronunciation: 'I need some help', category: 'daily', level: 3 },
+    { id: 13, text: 'I usually take a walk after dinner', translation: '저는 보통 저녁 식사 후 산책해요', pronunciation: 'I usually take a walk after dinner', category: 'daily', level: 4 },
+    { id: 14, text: 'I have been learning English little by little', translation: '저는 영어를 조금씩 배워오고 있어요', pronunciation: 'I have been learning English little by little', category: 'daily', level: 5 },
+    { id: 6, text: 'Where is the bathroom?', translation: '화장실이 어디에요?', pronunciation: 'where is the bathroom', category: 'travel', level: 1 },
+    { id: 7, text: 'How much is this?', translation: '이거 얼마예요?', pronunciation: 'how much is this', category: 'travel', level: 1 },
+    { id: 8, text: 'Can you recommend a restaurant?', translation: '식당 추천해주실 수 있나요?', pronunciation: 'can you recommend a restaurant', category: 'travel', level: 2 },
+    { id: 9, text: 'I would like to book a hotel room', translation: '호텔 방을 예약하고 싶어요', pronunciation: 'I would like to book a hotel room', category: 'travel', level: 3 },
+    { id: 15, text: 'Could you tell me the fastest way to the station?', translation: '역까지 가장 빠른 길을 알려주시겠어요?', pronunciation: 'Could you tell me the fastest way to the station', category: 'travel', level: 4 },
+    { id: 16, text: 'My flight was delayed because of the weather', translation: '날씨 때문에 제 비행기가 지연됐어요', pronunciation: 'My flight was delayed because of the weather', category: 'travel', level: 5 },
+    { id: 10, text: 'Nice to meet you', translation: '만나서 반갑습니다', pronunciation: 'nice to meet you', category: 'business', level: 2 },
+    { id: 11, text: 'I have a meeting at 3 PM', translation: '오후 3시에 회의가 있어요', pronunciation: 'I have a meeting at 3 PM', category: 'business', level: 3 },
+    { id: 12, text: 'Could you send me the report?', translation: '보고서를 보내주시겠어요?', pronunciation: 'could you send me the report', category: 'business', level: 4 },
+    { id: 17, text: 'Let us review the proposal before lunch', translation: '점심 전에 제안서를 검토합시다', pronunciation: 'Let us review the proposal before lunch', category: 'business', level: 5 },
+  ],
+  chinese: [
+    { id: 1, text: '你好', translation: '안녕하세요', pronunciation: 'nǐ hǎo', category: 'daily', level: 1 },
+    { id: 2, text: '谢谢', translation: '감사합니다', pronunciation: 'xiè xie', category: 'daily', level: 1 },
+    { id: 3, text: '早上好', translation: '좋은 아침입니다', pronunciation: 'zǎo shang hǎo', category: 'daily', level: 1 },
+    { id: 4, text: '你好吗？', translation: '잘 지내세요?', pronunciation: 'nǐ hǎo ma', category: 'daily', level: 2 },
+    { id: 5, text: '我需要帮助', translation: '도움이 필요해요', pronunciation: 'wǒ xū yào bāng zhù', category: 'daily', level: 3 },
+    { id: 13, text: '我通常晚饭后散步', translation: '저는 보통 저녁 식사 후 산책해요', pronunciation: 'wǒ tōng cháng wǎn fàn hòu sàn bù', category: 'daily', level: 4 },
+    { id: 14, text: '我一直一点一点地学中文', translation: '저는 중국어를 조금씩 배워오고 있어요', pronunciation: 'wǒ yì zhí yì diǎn yì diǎn de xué zhōng wén', category: 'daily', level: 5 },
+    { id: 6, text: '洗手间在哪里？', translation: '화장실이 어디에요?', pronunciation: 'xǐ shǒu jiān zài nǎ lǐ', category: 'travel', level: 1 },
+    { id: 7, text: '这个多少钱？', translation: '이거 얼마예요?', pronunciation: 'zhè ge duō shǎo qián', category: 'travel', level: 1 },
+    { id: 8, text: '你能推荐一家餐厅吗？', translation: '식당 추천해주실 수 있나요?', pronunciation: 'nǐ néng tuī jiàn yī jiā cān tīng ma', category: 'travel', level: 2 },
+    { id: 9, text: '我想预订酒店房间', translation: '호텔 방을 예약하고 싶어요', pronunciation: 'wǒ xiǎng yù dìng jiǔ diàn fáng jiān', category: 'travel', level: 3 },
+    { id: 15, text: '你能告诉我去车站最快的路吗？', translation: '역까지 가장 빠른 길을 알려주시겠어요?', pronunciation: 'nǐ néng gào sù wǒ qù chē zhàn zuì kuài de lù ma', category: 'travel', level: 4 },
+    { id: 16, text: '我的航班因为天气延误了', translation: '날씨 때문에 제 비행기가 지연됐어요', pronunciation: 'wǒ de háng bān yīn wèi tiān qì yán wù le', category: 'travel', level: 5 },
+    { id: 10, text: '很高兴认识你', translation: '만나서 반갑습니다', pronunciation: 'hěn gāo xìng rèn shi nǐ', category: 'business', level: 2 },
+    { id: 11, text: '我下午三点有会议', translation: '오후 3시에 회의가 있어요', pronunciation: 'wǒ xià wǔ sān diǎn yǒu huì yì', category: 'business', level: 3 },
+    { id: 12, text: '你能把报告发给我吗？', translation: '보고서를 보내주시겠어요?', pronunciation: 'nǐ néng bǎ bào gào fā gěi wǒ ma', category: 'business', level: 4 },
+    { id: 17, text: '我们午饭前看一下提案吧', translation: '점심 전에 제안서를 검토합시다', pronunciation: 'wǒ men wǔ fàn qián kàn yí xià tí àn ba', category: 'business', level: 5 },
+  ],
+  japanese: [
+    { id: 1, text: 'こんにちは', translation: '안녕하세요', pronunciation: 'konnichiwa', category: 'daily', level: 1 },
+    { id: 2, text: 'ありがとう', translation: '감사합니다', pronunciation: 'arigatō', category: 'daily', level: 1 },
+    { id: 3, text: 'おはよう', translation: '좋은 아침입니다', pronunciation: 'ohayō', category: 'daily', level: 1 },
+    { id: 4, text: '元気ですか？', translation: '잘 지내세요?', pronunciation: 'genki desu ka', category: 'daily', level: 2 },
+    { id: 5, text: '助けが必要です', translation: '도움이 필요해요', pronunciation: 'tasuke ga hitsuyō desu', category: 'daily', level: 3 },
+    { id: 13, text: '夕食後によく散歩します', translation: '저는 보통 저녁 식사 후 산책해요', pronunciation: 'yuushokugo ni yoku sanpo shimasu', category: 'daily', level: 4 },
+    { id: 14, text: '日本語を少しずつ勉強してきました', translation: '저는 일본어를 조금씩 배워오고 있어요', pronunciation: 'nihongo wo sukoshi zutsu benkyou shite kimashita', category: 'daily', level: 5 },
+    { id: 6, text: 'トイレはどこですか？', translation: '화장실이 어디에요?', pronunciation: 'toire wa doko desu ka', category: 'travel', level: 1 },
+    { id: 7, text: 'これはいくらですか？', translation: '이거 얼마예요?', pronunciation: 'kore wa ikura desu ka', category: 'travel', level: 1 },
+    { id: 8, text: 'レストランをおすすめできますか？', translation: '식당 추천해주실 수 있나요?', pronunciation: 'resutoran wo osusume dekimasu ka', category: 'travel', level: 2 },
+    { id: 9, text: 'ホテルの部屋を予約したいです', translation: '호텔 방을 예약하고 싶어요', pronunciation: 'hoteru no heya wo yoyaku shitai desu', category: 'travel', level: 3 },
+    { id: 15, text: '駅まで一番早い行き方を教えていただけますか？', translation: '역까지 가장 빠른 길을 알려주시겠어요?', pronunciation: 'eki made ichiban hayai ikikata wo oshiete itadakemasu ka', category: 'travel', level: 4 },
+    { id: 16, text: '天気のために飛行機が遅れました', translation: '날씨 때문에 제 비행기가 지연됐어요', pronunciation: 'tenki no tame ni hikouki ga okuremashita', category: 'travel', level: 5 },
+    { id: 10, text: 'お会いできて嬉しいです', translation: '만나서 반갑습니다', pronunciation: 'oai dekite ureshii desu', category: 'business', level: 2 },
+    { id: 11, text: '午後3時に会議があります', translation: '오후 3시에 회의가 있어요', pronunciation: 'gogo san-ji ni kaigi ga arimasu', category: 'business', level: 3 },
+    { id: 12, text: 'レポートを送っていただけますか？', translation: '보고서를 보내주시겠어요?', pronunciation: 'repōto wo okutte itadakemasu ka', category: 'business', level: 4 },
+    { id: 17, text: '昼食前に提案書を確認しましょう', translation: '점심 전에 제안서를 검토합시다', pronunciation: 'chuushoku mae ni teiansho wo kakunin shimashou', category: 'business', level: 5 },
+  ],
+  spanish: [
+    { id: 1, text: 'Hola', translation: '안녕하세요', pronunciation: 'ola', category: 'daily', level: 1 },
+    { id: 2, text: 'Gracias', translation: '감사합니다', pronunciation: 'grasias', category: 'daily', level: 1 },
+    { id: 3, text: 'Buenos días', translation: '좋은 아침입니다', pronunciation: 'buenos días', category: 'daily', level: 1 },
+    { id: 4, text: '¿Cómo estás?', translation: '잘 지내세요?', pronunciation: 'komo estas', category: 'daily', level: 2 },
+    { id: 5, text: 'Necesito ayuda', translation: '도움이 필요해요', pronunciation: 'necesito ayuda', category: 'daily', level: 3 },
+    { id: 13, text: 'Normalmente camino después de cenar', translation: '저는 보통 저녁 식사 후 산책해요', pronunciation: 'normalmente kamino despues de senar', category: 'daily', level: 4 },
+    { id: 14, text: 'He estado aprendiendo español poco a poco', translation: '저는 스페인어를 조금씩 배워오고 있어요', pronunciation: 'e estado aprendiendo espanyol poko a poko', category: 'daily', level: 5 },
+    { id: 6, text: '¿Dónde está el baño?', translation: '화장실이 어디에요?', pronunciation: 'donde esta el baño', category: 'travel', level: 1 },
+    { id: 7, text: '¿Cuánto cuesta esto?', translation: '이거 얼마예요?', pronunciation: 'kuanto kuesta esto', category: 'travel', level: 1 },
+    { id: 8, text: '¿Puedes recomendar un restaurante?', translation: '식당 추천해주실 수 있나요?', pronunciation: 'puedes rekomendar un restaurante', category: 'travel', level: 2 },
+    { id: 9, text: 'Quisiera reservar una habitación', translation: '호텔 방을 예약하고 싶어요', pronunciation: 'kisiera reservar una abitasion', category: 'travel', level: 3 },
+    { id: 15, text: '¿Podrías decirme la forma más rápida de llegar a la estación?', translation: '역까지 가장 빠른 길을 알려주시겠어요?', pronunciation: 'podrias desir-me la forma mas rapida de llegar a la estasion', category: 'travel', level: 4 },
+    { id: 16, text: 'Mi vuelo se retrasó por el clima', translation: '날씨 때문에 제 비행기가 지연됐어요', pronunciation: 'mi vuelo se retraso por el klima', category: 'travel', level: 5 },
+    { id: 10, text: 'Encantado de conocerte', translation: '만나서 반갑습니다', pronunciation: 'enkantado de konoserte', category: 'business', level: 2 },
+    { id: 11, text: 'Tengo una reunión a las 3 PM', translation: '오후 3시에 회의가 있어요', pronunciation: 'tengo una reunion a las tres PM', category: 'business', level: 3 },
+    { id: 12, text: '¿Podrías enviarme el informe?', translation: '보고서를 보내주시겠어요?', pronunciation: 'podrias enbiarme el informe', category: 'business', level: 4 },
+    { id: 17, text: 'Revisemos la propuesta antes del almuerzo', translation: '점심 전에 제안서를 검토합시다', pronunciation: 'rebisemos la propuesta antes del almuerzo', category: 'business', level: 5 },
+  ],
+};
