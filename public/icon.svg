@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="매일 언어 연습 아이콘">
+  <rect width="512" height="512" rx="112" fill="#4f46e5"/>
+  <path d="M144 148c0-18 14-32 32-32h160c18 0 32 14 32 32v216c0 18-14 32-32 32H176c-18 0-32-14-32-32V148Z" fill="#ffffff"/>
+  <path d="M184 176h144M184 224h88M184 272h144" stroke="#4f46e5" stroke-width="28" stroke-linecap="round"/>
+  <circle cx="348" cy="330" r="54" fill="#14b8a6"/>
+  <path d="M328 330h40M348 310v40" stroke="#ffffff" stroke-width="20" stroke-linecap="round"/>
+</svg>

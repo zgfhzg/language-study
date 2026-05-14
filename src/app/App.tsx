@@ -182,6 +182,18 @@ export default function PracticeApp() {
   };
 
   useEffect(() => {
+    if (process.env.NODE_ENV !== 'production' || !('serviceWorker' in navigator)) {
+      return;
+    }
+
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch((error) => {
+        console.error('Service worker registration failed', error);
+      });
+    });
+  }, []);
+
+  useEffect(() => {
     try {
       const storedHistory = window.localStorage.getItem(historyStorageKey);
       if (storedHistory) {
