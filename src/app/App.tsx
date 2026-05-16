@@ -14,17 +14,18 @@ import {
   Volume2,
 } from 'lucide-react';
 import { Category, Language, Phrase, phrasesData } from '@/data/phrases';
+import {
+  getDeviceId,
+  HistoryEntry,
+  isSupabaseConfigured,
+  loadLearningHistory,
+  saveLearningHistoryEntry,
+} from '@/lib/learningHistory';
 
 type TranslationDirection = 'ko-to-foreign' | 'foreign-to-ko';
 type ActiveTab = 'practice' | 'translate' | 'history';
 
-interface HistoryEntry extends Phrase {
-  language: Language;
-  learnedAt: string;
-  lastTranscript: string;
-}
-
-const historyStorageKey = 'language-practice-history-v1';
+const dailyPracticeCount = 10;
 
 const getPhraseKey = (language: Language, phrase: Phrase) => `${language}:${phrase.id}`;
 
@@ -41,6 +42,8 @@ export default function PracticeApp() {
   const [transcript, setTranscript] = useState('');
   const [completedPhrases, setCompletedPhrases] = useState<Set<number>>(new Set());
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [deviceId, setDeviceId] = useState('');
+  const [historyStatus, setHistoryStatus] = useState('');
   const [recognition, setRecognition] = useState<any>(null);
   const [translationDirection, setTranslationDirection] = useState<TranslationDirection>('ko-to-foreign');
   const [translationInput, setTranslationInput] = useState('');
@@ -82,14 +85,21 @@ export default function PracticeApp() {
   }, []);
 
   useEffect(() => {
-    try {
-      const storedHistory = window.localStorage.getItem(historyStorageKey);
-      if (storedHistory) {
-        setHistory(JSON.parse(storedHistory));
-      }
-    } catch (error) {
-      console.error('Failed to load practice history', error);
-    }
+    const currentDeviceId = getDeviceId();
+    setDeviceId(currentDeviceId);
+    setHistoryStatus(isSupabaseConfigured ? '학습 기록을 불러오고 있어요.' : 'Supabase 환경 변수가 필요합니다.');
+
+    loadLearningHistory(currentDeviceId)
+      .then((loadedHistory) => {
+        setHistory(loadedHistory);
+        setHistoryStatus(
+          isSupabaseConfigured ? 'Supabase에 학습 기록이 저장됩니다.' : '오늘 학습 기록은 현재 화면에만 반영됩니다.'
+        );
+      })
+      .catch((error) => {
+        console.error('Failed to load practice history', error);
+        setHistoryStatus('학습 기록을 불러오지 못했습니다.');
+      });
   }, []);
 
   useEffect(() => {
@@ -97,12 +107,14 @@ export default function PracticeApp() {
     const scopeChanged = practiceScopeRef.current !== scopeKey;
     practiceScopeRef.current = scopeKey;
     const learnedKeys = new Set(history.map((entry) => getPhraseKey(entry.language, entry)));
-    const filtered = phrasesData[language].filter(
+    const availablePhrases = phrasesData[language].filter(
       (phrase) =>
-        phrase.category === category &&
-        phrase.level === level &&
+        phrase.level <= level &&
         (!learnedKeys.has(getPhraseKey(language, phrase)) || completedPhrases.has(phrase.id))
     );
+    const focusedPhrases = availablePhrases.filter((phrase) => phrase.category === category);
+    const supportingPhrases = availablePhrases.filter((phrase) => phrase.category !== category);
+    const filtered = [...focusedPhrases, ...supportingPhrases].slice(0, dailyPracticeCount);
     setPhrases(filtered);
     setCurrentPhraseIndex((currentIndex) => {
       if (scopeChanged) {
@@ -160,28 +172,27 @@ export default function PracticeApp() {
       .replace(/[.,!?¿？。！、]/g, '')
       .replace(/\s+/g, ' ');
 
-  const saveHistoryEntry = (phrase: Phrase, spokenText: string) => {
-    setHistory((currentHistory) => {
-      const phraseKey = getPhraseKey(language, phrase);
-      const nextEntry: HistoryEntry = {
-        ...phrase,
-        language,
-        learnedAt: new Date().toISOString(),
-        lastTranscript: spokenText,
-      };
-      const nextHistory = [
-        nextEntry,
-        ...currentHistory.filter((entry) => getPhraseKey(entry.language, entry) !== phraseKey),
-      ];
+  const saveHistoryEntry = async (phrase: Phrase, spokenText: string) => {
+    if (!deviceId) {
+      return;
+    }
 
-      try {
-        window.localStorage.setItem(historyStorageKey, JSON.stringify(nextHistory));
-      } catch (error) {
-        console.error('Failed to save practice history', error);
-      }
-
-      return nextHistory;
-    });
+    try {
+      const savedEntry = await saveLearningHistoryEntry(deviceId, language, phrase, spokenText);
+      setHistory((currentHistory) => {
+        const phraseKey = getPhraseKey(language, phrase);
+        return [
+          savedEntry,
+          ...currentHistory.filter((entry) => getPhraseKey(entry.language, entry) !== phraseKey),
+        ];
+      });
+      setHistoryStatus(
+        isSupabaseConfigured ? 'Supabase에 학습 기록을 저장했어요.' : 'Supabase 환경 변수가 없어 임시로만 반영했어요.'
+      );
+    } catch (error) {
+      console.error('Failed to save practice history', error);
+      setHistoryStatus('학습 기록 저장에 실패했습니다.');
+    }
   };
 
   const getTranslationMatch = (input: string) => {
@@ -651,6 +662,12 @@ export default function PracticeApp() {
                 {scopedHistory.length}개
               </span>
             </div>
+
+            {historyStatus && (
+              <div className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+                {historyStatus}
+              </div>
+            )}
 
             {scopedHistory.length > 0 ? (
               <div className="grid grid-cols-1 gap-2">
